@@ -13,8 +13,8 @@ import{
 import cors from 'cors'; //middleware que nos permite especificar de quién queremos recibir request
 
 const corsOptions = {
-    origin: "http://localhost:5173",
-    methods: ["POST", "GET"],
+    origin: "*",//Permitir todo alv
+    methods: ["POST", "GET", "PUT","DELETE"],
     credentials: true,
 };
 
