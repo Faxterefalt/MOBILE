@@ -1,90 +1,96 @@
-import mysql from 'mysql2';
-import dotenv from 'dotenv';
-dotenv.config();
+import express from "express";
+import {
+  getTodo,
+  shareTodo,
+  deleteTodo,
+  getTodosByID,
+  createTodo,
+  toggleCompleted,
+  getUserByEmail,
+  getUserByID,
+  getSharedTodoByID,
+} from "./database.js";
+import bodyParser from "body-parser";
+import cors from "cors";
 
-const pool = mysql
-.createPool({
-    host: process.env.MYSQL_HOST,
-    user: process.env.MYSQL_USER,
-    password: process.env.MYSQL_PASSWORD,
-    database: process.env.MYSQL_DATABASE,
-})
-.promise();
+const corsOptions = {
+  origin: "http://127.0.0.1:5173", // specify the allowed origin
+  methods: ["POST", "GET"], // specify the allowed methods
+  credentials: true, // allow sending credentials (cookies, authentication)
+};
 
-export async function getTodosByID(id) {
-        const [row] = await pool.query(
-            `SELECT todos.*, shared_todos.shared_with_id
-            FROM todos
-            LEFT JOIN shared_todos ON todos.id = shared_todos.todo_id
-            WHERE todos.user_id = ? OR shared_todos.shared_with_id = ?
-            `,
-            [id, id]
-        );
-    return row;
-}
+const developers = [
+  { id: 1, name: "John Doe", apiKey: "abcdef123456" },
+  { id: 2, name: "Jane Doe", apiKey: "ghijkl789012" },
+];
 
-export async function getTodo(id){
-    const [rows] = await pool.query(`SELECT * FROM todos WHERE id = ?`,[id]);
-    return rows[0];
-}
+const ckeckApiKey = (req, res, next) => {
+  const apiKey = req.headers["x-api-key"];
+  const developer = developers.find((d) => d.apiKey === apiKey); //check if we have a dev with that key
+  if (!developer) {
+    return res.status(401).json({ message: "Unauthorized, invalid Api Key" });
+  }
+  req.developer = developer;
+  next();
+};
 
-export async function getSharedTodoByID(id){
-    const [rows] = await pool.query(
-    `SELECT * FROM shared_todos WHERE todo_id = ?`,
-    [id]
-    );
-    return rows[0];
-}
+const app = express();
+app.use(bodyParser.json());
+app.use(express.json());
+// app.use(cors());
+app.use(cors(corsOptions));
+app.use(ckeckApiKey);
 
-export async function getUserByID(id){
-    const [rows] = await pool.query(`SELECT * FROM users WHERE id = ?`,[id]);
-    return rows[0];
-}
+app.get("/todos/:id", async (req, res) => {
+  const todos = await getTodosByID(req.params.id);
+  res.status(200).send(todos);
+});
 
-export async function getUserByEmail(email){
-    const [rows] = await pool.query(`SELECT * FROM users WHERE email = ?`,[email]);
-    return rows[0];
-}
+app.get("/todos/shared_todos/:id", async (req, res) => {
+  const todo = await getSharedTodoByID(req.params.id);
+  const author = await getUserByID(todo.user_id);
+  const shared_with = await getUserByID(todo.shared_with_id);
+  res.status(200).send({ author, shared_with });
+});
 
-export async function createTodo(user_id, title){
-    const [result] = await pool.query(`
-        
-        INSERT INTO todos (user_id,title)
-        VALUES (?,?)
+app.get("/users/:id", async (req, res) => {
+  const user = await getUserByID(req.params.id);
+  res.status(200).send(user);
+});
 
-        `,
-    [user_id, title]);
-    const todoID = result.insertId;
-    return getTodo(todoID);
-}
+app.put("/todos/:id", async (req, res) => {
+  const { value } = req.body;
+  const todo = await toggleCompleted(req.params.id, value);
+  res.status(200).send(todo);
+});
 
-export async function deleteTodo(id){
-    const [result] = await pool.query(
-        `DELETE FROM todos WHERE id = ?;`,[id]
-    );
-    return result;
-}
+app.delete("/todos/:id", async (req, res) => {
+  await deleteTodo(req.params.id);
+  res.send({ message: "Todo deleted successfully" });
+});
 
-export async function toggleCompleted(id,value){
-    const newValue = value === true ? "TRUE" : "FALSE";
-    const [result] = await pool.query(
-        `
-        UPDATE todos
-        SET completed = ${newValue}
-        WHERE id = ?;
-        `,
-        [id]
-    );
-    return result;
-}
+app.post("/todos/shared_todos", async (req, res) => {
+  const { todo_id, user_id, email } = req.body;
+  // const { todo_id, user_id, shared_with_id } = req.body;
+  const userToShare = await getUserByEmail(email);
+  const sharedTodo = await shareTodo(todo_id, user_id, userToShare.id);
+  res.status(201).send(sharedTodo);
+});
 
-export async function shareTodo(todo_id, user_id, shared_with_id){
-    const [result] = await pool.query(
-        `
-        INSERT INTO shared_todos (todo_id, user_id, shared_with_id)
-        VALUES (?,?,?);
-        `,
-        [todo_id, user_id, shared_with_id]
-    );
-    return result.insertId;
-}
+// app.get("/todos/:id", async (req, res) => {
+//   const id = req.params.id;
+//   const todo = await getTodo(id);
+//   res.status(200).send(todo);
+// });
+
+app.post("/todos", async (req, res) => {
+  const { user_id, title } = req.body;
+  const todo = await createTodo(user_id, title);
+  res.status(201).send(todo);
+});
+
+app.listen(8080, () => {
+  console.log("Server running on port 8080");
+});
+
+////////////////////////////////////////////////////////////////////

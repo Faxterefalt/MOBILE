@@ -6,7 +6,7 @@ export default function App(){
     const [todos, setTodos] = useState([]);
 
     async function fetchData(){
-    const response = await fetch["http://localhost:8080/todos/1"];
+    const response = await fetch("http://localhost:8080/todos/1");
     const data = await response.json();
     setTodos(data);
 }
