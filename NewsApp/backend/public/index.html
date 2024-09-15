@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <link rel="stylesheet" href="main.css"/>
+    <title>News DashBoard</title>
+</head>
+
+<body>
+    <div class="form-container">
+        <h1 class="heading">Post Your News</h1>
+
+        <p class="message">Error</p>
+        <form class="form" enctype="multipart/form-data">
+            <div class="input-container">
+                <input type="text" name="title" id="title" class="input" />
+                <label for="title" class="label">Title <sup>*</sup></label>
+            </div>
+            <div class="input-container">
+                <textarea 
+                name="content" 
+                id="content" 
+                cols="30" 
+                rows="10" 
+                class="input"></textarea>
+                <label class="label" for="content">Content <sup>*</sup></label>
+            </div>
+            <div class="input-container">
+                <label for="thumbnail" class="label">Thumbnail <sup>*</sup></label>
+                <input type="file" name="thumbnail" id="thumbnail" />
+            </div>
+            <div class="input-container">
+                <label for="category" class="label">Category <sup>*</sup></label>
+                <select name="category" id="category" class="input">
+                    <option value="" disabled selected>Select a category</option>
+                    <!-- Aquí puedes agregar más opciones de categoría -->
+                    <option value="tech">Tech</option>
+                    <option value="political">Political</option>
+                    <option value="entertainment">Entertainment</option>
+                </select>
+            </div>
+            <div class="input-container featured-container">
+                <input type="checkbox" name="featured" id="featured-content" />
+                <label for="featured" class="checkbox-label">Featured Content</label>
+            </div>
+            <div class="input-container">
+            <button type="submit" class="btn">SUBMIT</button>
+            </div>
+        </form>
+        <div class="test"></div>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script src="main.js"></script>
+</body>
+</html>
