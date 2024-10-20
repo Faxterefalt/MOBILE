@@ -6,10 +6,11 @@ const arrayForeach = tecnologías.forEach(function(i){
     return i
 })
 
+tecnologias.forEach(tech => console.log(tech))
+
 //map - crea un nuevo array
 const arrayMap = tecnologías.map(function(i){
     return i
 })
 
-console.log(arrayForeach)
-console.log(arrayMap)
+
